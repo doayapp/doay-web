@@ -4,7 +4,7 @@ use mime_guess::from_path;
 
 const PORT: u16 = 8080;
 
-static STATIC_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/static");
+static STATIC_DIR: Dir = include_dir!("../static");
 
 #[get("/api/hello")]
 async fn hello() -> impl Responder {
