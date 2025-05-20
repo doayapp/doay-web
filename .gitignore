@@ -18,6 +18,9 @@ lerna-debug.log*
 *.sln
 *.sw?
 
-src-server/target
+node_modules
+dist
 test*
-static
+
+src-server/target
+src-server/Cargo.lock
