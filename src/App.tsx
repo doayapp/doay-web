@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react"
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom"
+import { Routes, Route, Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import {
     CssBaseline, AppBar, Box, Drawer, Toolbar, Typography,
@@ -33,6 +33,49 @@ function Settings() {
     return <Typography variant="h5">{t("menu.settings")}</Typography>
 }
 
+function SideMenu({menu, selectedKey, onSelect}: { menu: any[], selectedKey: string, onSelect: (path: string) => void }) {
+    const location = useLocation()
+
+    useEffect(() => {
+        if (location.pathname !== selectedKey) {
+            onSelect(location.pathname)
+        }
+    }, [location.pathname, onSelect, selectedKey])
+
+    return (
+        <Drawer
+            variant="permanent"
+            sx={{
+                width: drawerWidth,
+                flexShrink: 0,
+                [`& .MuiDrawer-paper`]: {
+                    width: drawerWidth,
+                    boxSizing: "border-box"
+                }
+            }}
+        >
+            <Toolbar>
+                <Typography variant="h6">Doay</Typography>
+            </Toolbar>
+            <List>
+                {menu.map(item => (
+                    <ListItem key={item.path} disablePadding>
+                        <ListItemButton
+                            component={Link}
+                            to={item.path}
+                            selected={selectedKey === item.path}
+                            onClick={() => onSelect(item.path)}
+                        >
+                            <ListItemIcon>{item.icon}</ListItemIcon>
+                            <ListItemText primary={item.text}/>
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+        </Drawer>
+    )
+}
+
 export default function App() {
     const {t, i18n} = useTranslation()
     const prefersDark = useMediaQuery("(prefers-color-scheme: dark)")
@@ -48,8 +91,10 @@ export default function App() {
         return prefersDark
     })
 
+    const [selectedKey, setSelectedKey] = useState("/")
+
     useEffect(() => {
-        i18n.changeLanguage(lang).catch()
+        i18n.changeLanguage(lang).catch(() => 0)
         localStorage.setItem("app-language", lang)
     }, [lang, i18n])
 
@@ -76,68 +121,41 @@ export default function App() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline/>
-            <Router>
-                <Box sx={{display: "flex"}}>
-                    <Drawer
-                        variant="permanent"
-                        sx={{
-                            width: drawerWidth,
-                            flexShrink: 0,
-                            [`& .MuiDrawer-paper`]: {
-                                width: drawerWidth,
-                                boxSizing: "border-box"
-                            }
-                        }}
-                    >
+            <Box sx={{display: "flex"}}>
+                <SideMenu menu={menu} selectedKey={selectedKey} onSelect={setSelectedKey}/>
+                <Box sx={{flexGrow: 1, display: "flex", flexDirection: "column"}}>
+                    <AppBar position="fixed" sx={{zIndex: theme.zIndex.drawer + 1}}>
                         <Toolbar>
-                            <Typography variant="h6">Doay</Typography>
+                            <Typography variant="h6" sx={{flexGrow: 1}}>
+                                {t("title")}
+                            </Typography>
+                            <IconButton onClick={() => setDarkMode(!darkMode)} color="inherit" title={darkMode ? "Light mode" : "Dark mode"}>
+                                {darkMode ? <Brightness7/> : <Brightness4/>}
+                            </IconButton>
+                            <IconButton color="inherit" onClick={(e) => setLangMenuAnchor(e.currentTarget)} title="Change language">
+                                <Translate/>
+                            </IconButton>
+                            <Menu
+                                anchorEl={langMenuAnchor}
+                                open={openLangMenu}
+                                onClose={() => setLangMenuAnchor(null)}
+                            >
+                                <MenuItem selected={lang === "zh"} onClick={() => toggleLang("zh")}>简体中文</MenuItem>
+                                <MenuItem selected={lang === "en"} onClick={() => toggleLang("en")}>English</MenuItem>
+                            </Menu>
                         </Toolbar>
-                        <List>
-                            {menu.map(item => (
-                                <ListItem key={item.path} disablePadding>
-                                    <ListItemButton component={Link} to={item.path}>
-                                        <ListItemIcon>{item.icon}</ListItemIcon>
-                                        <ListItemText primary={item.text}/>
-                                    </ListItemButton>
-                                </ListItem>
-                            ))}
-                        </List>
-                    </Drawer>
+                    </AppBar>
 
-                    <Box sx={{flexGrow: 1, display: "flex", flexDirection: "column"}}>
-                        <AppBar position="fixed" sx={{zIndex: theme.zIndex.drawer + 1}}>
-                            <Toolbar>
-                                <Typography variant="h6" sx={{flexGrow: 1}}>
-                                    {t("title")}
-                                </Typography>
-                                <IconButton onClick={() => setDarkMode(!darkMode)} color="inherit" title={darkMode ? "Light mode" : "Dark mode"}>
-                                    {darkMode ? <Brightness7/> : <Brightness4/>}
-                                </IconButton>
-                                <IconButton color="inherit" onClick={(e) => setLangMenuAnchor(e.currentTarget)} title="Change language">
-                                    <Translate/>
-                                </IconButton>
-                                <Menu
-                                    anchorEl={langMenuAnchor}
-                                    open={openLangMenu}
-                                    onClose={() => setLangMenuAnchor(null)}
-                                >
-                                    <MenuItem selected={lang === "zh"} onClick={() => toggleLang("zh")}>简体中文</MenuItem>
-                                    <MenuItem selected={lang === "en"} onClick={() => toggleLang("en")}>English</MenuItem>
-                                </Menu>
-                            </Toolbar>
-                        </AppBar>
-
-                        <Box component="main" sx={{flexGrow: 1, p: 3, mt: 8}}>
-                            <Routes>
-                                <Route path="/" element={<Home/>}/>
-                                <Route path="/nodes" element={<Nodes/>}/>
-                                <Route path="/logs" element={<Logs/>}/>
-                                <Route path="/settings" element={<Settings/>}/>
-                            </Routes>
-                        </Box>
+                    <Box component="main" sx={{flexGrow: 1, p: 3, mt: 8}}>
+                        <Routes>
+                            <Route path="/" element={<Home/>}/>
+                            <Route path="/nodes" element={<Nodes/>}/>
+                            <Route path="/logs" element={<Logs/>}/>
+                            <Route path="/settings" element={<Settings/>}/>
+                        </Routes>
                     </Box>
                 </Box>
-            </Router>
+            </Box>
         </ThemeProvider>
     )
 }
